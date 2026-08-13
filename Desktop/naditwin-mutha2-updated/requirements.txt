@@ -1,2 +1,0 @@
-# Runtime dependencies (none required - uses Python standard library only)
-# This file exists for platform compatibility
