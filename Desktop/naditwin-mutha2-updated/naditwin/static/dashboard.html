@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIVER EYE — Mula-Mutha Reach Demo Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --obs:#1f77b4; --fc:#7e57c2; --bed:#8d6e63; --crest:#37474f;
+    --danger:#c62828; --warn:#ef6c00; --watch:#f9a825; --safe:#2e7d32;
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1a2733; --muted:#5f6b76;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:#0b3556;color:#fff;padding:14px 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font-size:22px;letter-spacing:.5px}
+  header .sub{opacity:.8;font-size:13px}
+  .banner{background:#fff3cd;color:#6b4b00;border-bottom:1px solid #e6c96a;
+          padding:8px 22px;font-size:13px;font-weight:600}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 22px;display:grid;
+        grid-template-columns:2fr 1fr;gap:16px}
+  .card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);
+        padding:14px 16px}
+  .card h2{margin:0 0 8px;font-size:15px;color:#0b3556}
+  .full{grid-column:1/-1}
+  .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .stat{background:#eef3f8;border-radius:8px;padding:8px 14px;font-size:13px}
+  .stat b{font-size:17px;display:block;color:#0b3556}
+  .legend{font-size:12px;color:var(--muted);margin-top:4px}
+  .legend span{display:inline-block;margin-right:14px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  input[type=range]{width:100%}
+  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .asset{border-radius:8px;padding:10px;color:#fff;font-size:12.5px}
+  .asset b{font-size:14px;display:block;margin-bottom:2px}
+  .asset .m{font-size:20px;font-weight:700}
+  .DANGER{background:var(--danger)} .WARNING{background:var(--warn)}
+  .WATCH{background:var(--watch);color:#3a2f00} .SAFE{background:var(--safe)}
+  .alert{border-left:4px solid var(--danger);background:#fdecea;padding:8px 10px;
+         margin-bottom:8px;border-radius:4px;font-size:13px}
+  .alert.WATCH{border-color:var(--watch);background:#fff8e1}
+  .alert.WARNING{border-color:var(--warn);background:#fff3e0}
+  .alert small{color:var(--muted);display:block;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:6px 8px;border-bottom:1px solid #e3e8ee;text-align:left}
+  th{color:#0b3556}
+  button{background:#0b3556;color:#fff;border:0;border-radius:6px;padding:8px 14px;
+         font-size:13px;cursor:pointer}
+  button:hover{background:#124a77}
+  select{padding:6px;border-radius:6px;border:1px solid #c7d0d9;font-size:13px}
+  .note{font-size:11.5px;color:var(--muted);margin-top:6px}
+  #nochart{display:none;padding:20px;color:var(--danger);font-weight:600}
+  canvas{max-height:340px}
+  #map{height:380px;border-radius:8px}
+  .maplegend{font-size:12px;color:var(--muted);margin-top:6px}
+  .maplegend span{display:inline-block;margin-right:14px}
+  .swatch{display:inline-block;width:18px;height:3px;margin-right:5px;vertical-align:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>RIVER EYE</h1>
+  <div class="sub" id="headsub">Mula-Mutha River Intelligence · Sangam → Manjari Reach</div>
+</header>
+<div class="wrap" style="padding-bottom:0">
+  <div class="card full">
+    <h2>Reach location — Sangam → Manjari (traced from KML, real polygon + extracted centerline)</h2>
+    <div id="map"></div>
+    <div class="maplegend">
+      <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon (from KML)</span>
+      <span><span class="swatch" style="background:#ffee58"></span>Extracted centerline / chainage (used for all charts below)</span>
+      <span><span class="swatch" style="background:#ff1744"></span>Demo assets (illustrative placement, not verified real infrastructure)</span>
+      <span><span class="swatch" style="background:#2962ff"></span>Named localities (Sangam, Bund Garden, Dhanori…)</span>
+      <span id="mapEngineLabel">Basemap: Satellite / Street toggle top-right of map</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card full">
+    <div class="row">
+      <div class="stat">Simulation clock<b id="simhour">–</b></div>
+      <div class="stat">Upstream discharge now<b id="qnow">–</b></div>
+      <div class="stat">Reach<b id="reachstat">–</b></div>
+      <div class="stat">Ensemble<b>50 members · 72 h</b></div>
+      <button onclick="advance()">Advance simulation +6 h ▸</button>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h2>Longitudinal profile — observed vs forecast (confidence fog = P10–P90)</h2>
+    <div id="nochart">Chart.js failed to load (offline?). APIs still work at /api/*.</div>
+    <canvas id="profile"></canvas>
+    <div class="row" style="margin-top:8px">
+      <div style="flex:1">
+        <input type="range" id="lead" min="1" max="72" value="24"
+               oninput="leadLabel.textContent='+'+this.value+' h'; drawProfile()">
+      </div>
+      <div class="stat">Forecast lead <b id="leadLabel">+24 h</b></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--obs)"></span>Observed WSE (now)</span>
+      <span><span class="dot" style="background:var(--fc)"></span>Forecast median</span>
+      <span><span class="dot" style="background:#c9b8e8"></span>P10–P90 band</span>
+      <span><span class="dot" style="background:var(--bed)"></span>Inferred bed (±σ shading)</span>
+      <span><span class="dot" style="background:var(--crest)"></span>Embankment crest</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Hydrograph at asset <select id="assetSel" onchange="drawHydro()"></select></h2>
+    <canvas id="hydro"></canvas>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--obs)"></span>Observed (past 72 h)</span>
+      <span><span class="dot" style="background:var(--fc)"></span>Ensemble median</span>
+      <span><span class="dot" style="background:#d32f2f"></span>Asset threshold</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Active alerts</h2>
+    <div id="alerts"></div>
+    <div class="note">Alert semantics: probability of exceedance + time-to-threshold + current margin. Confidence stated on every alert.</div>
+  </div>
+
+  <div class="card full">
+    <h2>Margin board — margin to threshold per protected asset</h2>
+    <div class="board" id="board"></div>
+    <div class="note">Status bands: SAFE &lt;10% · WATCH ≥10% · WARNING ≥30% · DANGER ≥60% probability of 72 h exceedance (or margin already ≤ 0).</div>
+  </div>
+
+  <div class="card full">
+    <h2>Seasonal scorecard (hindcast-scored, live-computed)</h2>
+    <table id="score"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table>
+    <div class="note" id="scorenote"></div>
+  </div>
+
+</div>
+
+<script>
+// ---- Google Maps config -----------------------------------------------
+// Paste your own Google Maps JavaScript API key here to use Google Maps
+// as the basemap. Leave it blank to automatically fall back to the
+// Leaflet satellite/street map (Esri / OpenStreetMap tiles) below —
+// the dashboard works either way.
+const GOOGLE_MAPS_API_KEY = "";
+// -------------------------------------------------------------------------
+
+let META=null, profileChart=null, hydroChart=null;
+const $=id=>document.getElementById(id);
+
+async function j(u,opt){const r=await fetch(u,opt);return r.json();}
+
+function decimate(arr,step){const o=[];for(let i=0;i<arr.length;i+=step)o.push(arr[i]);return o;}
+const STEP=4; // plot every 4th cell (40 m) for speed; data itself is 10 m
+
+async function init(){
+  if(typeof Chart==="undefined"){$("nochart").style.display="block";}
+  META=await j("/api/meta");
+  META.cell_size_m = (META.chainage_km.length>1)
+    ? (META.chainage_km[1]-META.chainage_km[0])*1000 : 10;
+  $("simhour").textContent="t + "+META.sim_hour+" h";
+  $("reachstat").textContent=META.reach_km+" km · "+META.n_cells+" stations";
+  const sel=$("assetSel");
+  sel.innerHTML=META.assets.map(a=>`<option value="${a.id}">${a.id} — ${a.name}</option>`).join("");
+  loadMap();
+  await refreshAll();
+}
+
+function loadMap(){
+  if(GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY.trim()!==""){
+    window.initGoogleMap=drawGoogleMap;
+    const s=document.createElement("script");
+    s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GOOGLE_MAPS_API_KEY)+"&callback=initGoogleMap";
+    s.onerror=()=>{ $("mapEngineLabel").textContent="Google Maps failed to load — showing Leaflet fallback"; drawLeafletMap(); };
+    document.head.appendChild(s);
+  } else {
+    drawLeafletMap();
+  }
+}
+
+function drawGoogleMap(){
+  const centerLon=META.lon[Math.floor(META.lon.length/2)];
+  const centerLat=META.lat[Math.floor(META.lat.length/2)];
+  const map=new google.maps.Map($("map"),{
+    center:{lat:centerLat,lng:centerLon}, zoom:13, mapTypeId:"satellite",
+    mapTypeControl:true, streetViewControl:false,
+    mapTypeControlOptions:{position:google.maps.ControlPosition.TOP_RIGHT}
+  });
+
+  new google.maps.Polygon({
+    paths:META.reach_polygon_lonlat.map(([lo,la])=>({lat:la,lng:lo})),
+    strokeColor:"#2dc0fb", strokeWeight:2, fillColor:"#2dc0fb", fillOpacity:.12
+  }).setMap(map);
+
+  new google.maps.Polyline({
+    path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
+    strokeColor:"#ffee58", strokeWeight:3
+  }).setMap(map);
+
+  (META.landmarks||[]).forEach(lm=>{
+    const m=new google.maps.Marker({
+      position:{lat:lm.lat,lng:lm.lon}, map,
+      label:{text:lm.name,color:"#0b3556",fontSize:"11px",fontWeight:"600",className:"gmap-locality-label"},
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}
+    });
+    m.addListener("click",()=>new google.maps.InfoWindow({
+      content:`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`
+    }).open(map,m));
+  });
+
+  META.assets.forEach(a=>{
+    const m=new google.maps.Marker({
+      position:{lat:a.lat,lng:a.lon}, map,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#ff1744",fillOpacity:.95,strokeColor:"#fff",strokeWeight:2}
+    });
+    m.addListener("click",()=>new google.maps.InfoWindow({
+      content:`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`
+    }).open(map,m));
+  });
+
+  const bounds=new google.maps.LatLngBounds();
+  META.reach_polygon_lonlat.forEach(([lo,la])=>bounds.extend({lat:la,lng:lo}));
+  map.fitBounds(bounds);
+  $("mapEngineLabel").textContent="Basemap: Google Maps (Satellite / Roadmap toggle top-right)";
+}
+
+function drawLeafletMap(){
+  if(typeof L==="undefined")return;
+  const centerLon=META.lon[Math.floor(META.lon.length/2)];
+  const centerLat=META.lat[Math.floor(META.lat.length/2)];
+  const map=L.map('map').setView([centerLat,centerLon],14);
+
+  const satellite=L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,attribution:'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics'}
+  );
+  const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});
+
+  satellite.addTo(map);   // default view = satellite
+  L.control.layers({"Satellite":satellite,"Street map":streets},null,{position:'topright'}).addTo(map);
+
+  const poly=META.reach_polygon_lonlat.map(([lo,la])=>[la,lo]);
+  L.polygon(poly,{color:'#2dc0fb',weight:2,fillOpacity:.12}).addTo(map);
+  const center=META.lat.map((la,i)=>[la,META.lon[i]]);
+  L.polyline(center,{color:'#ffee58',weight:3}).addTo(map);
+
+  (META.landmarks||[]).forEach(lm=>{
+    L.circleMarker([lm.lat,lm.lon],{radius:6,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:2})
+      .bindPopup(`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`)
+      .addTo(map);
+  });
+  META.assets.forEach(a=>{
+    L.circleMarker([a.lat,a.lon],{radius:6,color:'#ff1744',fillColor:'#ff1744',fillOpacity:.95,weight:2})
+      .bindPopup(`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`)
+      .addTo(map);
+  });
+  const bounds=L.latLngBounds(poly);
+  map.fitBounds(bounds,{padding:[20,20]});
+  $("mapEngineLabel").textContent="Basemap: Leaflet — Satellite / Street toggle top-right of map";
+}
+
+async function refreshAll(){
+  const st=await j("/api/state");
+  $("qnow").textContent=st.q_now+" m³/s (synthetic)";
+  window._wseNow=st.wse;
+  await drawProfile();
+  await drawHydro();
+  await drawBoard();
+  await drawAlerts();
+  await drawScore();
+}
+
+async function drawProfile(){
+  if(typeof Chart==="undefined")return;
+  const lead=parseInt($("lead").value);
+  const fc=await j("/api/forecast/profile?lead="+lead);
+  const x=decimate(META.chainage_km,STEP);
+  const bed=decimate(META.bed,STEP), crest=decimate(META.crest,STEP);
+  const sig=decimate(META.sigma_bed,STEP);
+  const bedHi=bed.map((v,i)=>v+sig[i]), bedLo=bed.map((v,i)=>v-sig[i]);
+  const ds=[
+    {label:"P90",data:decimate(fc.p90,STEP),borderWidth:0,pointRadius:0,fill:false,backgroundColor:"rgba(126,87,194,.18)"},
+    {label:"P10",data:decimate(fc.p10,STEP),borderWidth:0,pointRadius:0,fill:"-1",backgroundColor:"rgba(126,87,194,.18)"},
+    {label:"Forecast median (+"+lead+" h)",data:decimate(fc.median,STEP),borderColor:"#7e57c2",borderWidth:2,pointRadius:0,fill:false},
+    {label:"Observed WSE now",data:decimate(window._wseNow,STEP),borderColor:"#1f77b4",borderWidth:2,pointRadius:0,fill:false},
+    {label:"bed+σ",data:bedHi,borderWidth:0,pointRadius:0,fill:false,backgroundColor:"rgba(141,110,99,.25)"},
+    {label:"bed−σ",data:bedLo,borderWidth:0,pointRadius:0,fill:"-1",backgroundColor:"rgba(141,110,99,.25)"},
+    {label:"Inferred bed",data:bed,borderColor:"#8d6e63",borderWidth:1.5,pointRadius:0,fill:false},
+    {label:"Crest",data:crest,borderColor:"#37474f",borderWidth:1.5,borderDash:[6,3],pointRadius:0,fill:false},
+  ];
+  const cfg={type:"line",data:{labels:x,datasets:ds},
+    options:{animation:false,plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:"Chainage (km)"},ticks:{maxTicksLimit:13}},
+              y:{title:{display:true,text:"Elevation (m, local datum)"}}}}};
+  if(profileChart){profileChart.data=cfg.data;profileChart.update();}
+  else profileChart=new Chart($("profile"),cfg);
+}
+
+async function drawHydro(){
+  if(typeof Chart==="undefined")return;
+  const a=META.assets.find(a=>a.id===$("assetSel").value)||META.assets[0];
+  const cell=Math.round(a.chainage_m/META.cell_size_m);
+  const h=await j("/api/hydrograph?cell="+cell);
+  const past=h.observed.length;
+  const labels=[];
+  for(let i=-past+1;i<=0;i++)labels.push(i);
+  for(let k=1;k<=h.forecast.median.length;k++)labels.push("+"+k);
+  const pad=Array(past).fill(null);
+  const thr=Array(labels.length).fill(a.threshold);
+  const ds=[
+    {label:"P90",data:pad.concat(h.forecast.p90),borderWidth:0,pointRadius:0,backgroundColor:"rgba(126,87,194,.18)",fill:false},
+    {label:"P10",data:pad.concat(h.forecast.p10),borderWidth:0,pointRadius:0,backgroundColor:"rgba(126,87,194,.18)",fill:"-1"},
+    {label:"Forecast median",data:pad.concat(h.forecast.median),borderColor:"#7e57c2",borderWidth:2,pointRadius:0,fill:false},
+    {label:"Observed",data:h.observed.concat(Array(h.forecast.median.length).fill(null)),borderColor:"#1f77b4",borderWidth:2,pointRadius:0,fill:false},
+    {label:"Threshold",data:thr,borderColor:"#d32f2f",borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false},
+  ];
+  const cfg={type:"line",data:{labels,datasets:ds},
+    options:{animation:false,plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:"Hours (relative to now)"},ticks:{maxTicksLimit:12}},
+              y:{title:{display:true,text:"WSE (m)"}}}}};
+  if(hydroChart){hydroChart.data=cfg.data;hydroChart.update();}
+  else hydroChart=new Chart($("hydro"),cfg);
+}
+
+async function drawBoard(){
+  const ms=await j("/api/margins");
+  $("board").innerHTML=ms.map(m=>`
+    <div class="asset ${m.status}">
+      <b>${m.id}</b>${m.name}
+      <div class="m">${m.margin_now_m>0?"+":""}${m.margin_now_m} m</div>
+      <div>P(exceed 72 h): ${(m.p_exceed_72h*100).toFixed(0)}%</div>
+      <div>${m.time_to_threshold_h?("~"+m.time_to_threshold_h+" h to threshold"):"no median crossing"}</div>
+    </div>`).join("");
+}
+
+async function drawAlerts(){
+  const al=await j("/api/alerts");
+  $("alerts").innerHTML=al.length?al.map(a=>`
+    <div class="alert ${a.severity}"><b>[${a.severity}]</b> ${a.message}
+      <small>${a.confidence_note}</small></div>`).join("")
+    :'<div class="note">No active alerts. All margins within safe band.</div>';
+}
+
+async function drawScore(){
+  const s=await j("/api/scorecard");
+  document.querySelector("#score tbody").innerHTML=
+    s.rows.map(r=>`<tr><td>${r.metric}</td><td><b>${r.value}</b></td></tr>`).join("");
+  $("scorenote").textContent=s.note||"";
+}
+
+async function advance(){
+  const r=await j("/api/advance?hours=6",{method:"POST"});
+  $("simhour").textContent="t + "+r.sim_hour+" h";
+  await refreshAll();
+}
+
+init();
+</script>
+</body>
+</html>
