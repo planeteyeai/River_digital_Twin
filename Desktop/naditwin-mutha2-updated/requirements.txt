@@ -1,0 +1,2 @@
+# No external dependencies required
+# This file exists for deployment platform compatibility
