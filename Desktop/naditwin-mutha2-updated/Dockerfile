@@ -22,5 +22,5 @@ EXPOSE 8080
 # HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 #     CMD curl -f http://localhost:8080/api/meta || exit 1
 
-# Default command - try to find run.py
-CMD if [ -f "run.py" ]; then python3 run.py --port 8080 --no-browser; elif [ -f "Desktop/naditwin-mutha2-updated/run.py" ]; then cd Desktop/naditwin-mutha2-updated && python3 run.py --port 8080 --no-browser; else echo "Cannot find run.py anywhere!" && find /app -name "*.py" && exit 1; fi
+# Default command - use the launcher script
+CMD ["python3", "start.py"]
