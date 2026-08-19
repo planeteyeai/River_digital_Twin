@@ -17,6 +17,7 @@ Every numeric layer is served with its uncertainty representation
 
 import json
 import os
+import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -28,14 +29,26 @@ engine = None  # set in serve()
 
 
 class Handler(BaseHTTPRequestHandler):
+
     def _send(self, code, body, ctype="application/json"):
         data = body if isinstance(body, bytes) else json.dumps(body).encode()
-        self.send_response(code)
-        self.send_header("Content-Type", ctype)
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            # Client disconnected before response was fully sent.
+            # Normal on Railway (proxy health checks) — silently ignore.
+            pass
+
+    def handle_error(self, request, client_address):
+        # Stop socketserver printing double-tracebacks for client disconnects.
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):
+            return
+        super().handle_error(request, client_address)
 
     def log_message(self, fmt, *args):  # quieter console
         pass
@@ -69,16 +82,23 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/scorecard":
                 return self._send(200, engine.scorecard())
             return self._send(404, {"error": "not found"})
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # client disconnected mid-request — nothing to do
         except Exception as e:  # demo-grade error surface
             return self._send(500, {"error": str(e)})
 
     def do_POST(self):
         u = urlparse(self.path)
         q = parse_qs(u.query)
-        if u.path == "/api/advance":
-            hours = int(q.get("hours", ["6"])[0])
-            return self._send(200, engine.advance(hours))
-        return self._send(404, {"error": "not found"})
+        try:
+            if u.path == "/api/advance":
+                hours = int(q.get("hours", ["6"])[0])
+                return self._send(200, engine.advance(hours))
+            return self._send(404, {"error": "not found"})
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as e:
+            return self._send(500, {"error": str(e)})
 
 
 def serve(port=8080, seed=42, gauge_csv=None):
