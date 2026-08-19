@@ -422,7 +422,15 @@ class TwinEngine:
         }
 
     def advance(self, hours=6):
-        hours = max(1, min(24, int(hours)))
-        self.now_idx = min(TRUTH_HOURS - FORECAST_HOURS - 2, self.now_idx + hours)
+        hours = int(hours)
+        # Allow -24 to +24; reject zero
+        hours = max(-24, min(24, hours))
+        if hours == 0:
+            hours = 1
+        # Clamp so sim_hour never goes below 0 or past available truth data
+        self.now_idx = max(
+            PAST_HOURS,
+            min(TRUTH_HOURS - FORECAST_HOURS - 2, self.now_idx + hours)
+        )
         self.refresh_forecast()
         return {"sim_hour": self.now_idx - PAST_HOURS}
