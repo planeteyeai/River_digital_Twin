@@ -50,6 +50,14 @@
   button{background:#0b3556;color:#fff;border:0;border-radius:6px;padding:8px 14px;
          font-size:13px;cursor:pointer}
   button:hover{background:#124a77}
+  .stepper{display:flex;align-items:center;gap:0;border:2px solid #0b3556;border-radius:8px;overflow:hidden}
+  .stepper label{background:#eef3f8;padding:6px 10px;font-size:12px;color:#0b3556;font-weight:600;white-space:nowrap;border-right:1px solid #c7d0d9}
+  .stepper button{border-radius:0;padding:6px 14px;font-size:18px;line-height:1;background:#0b3556;border:none}
+  .stepper button:hover{background:#124a77}
+  .stepper input[type=number]{width:62px;border:none;border-left:1px solid #c7d0d9;border-right:1px solid #c7d0d9;
+         padding:6px 4px;font-size:14px;font-weight:700;text-align:center;color:#0b3556;outline:none;-moz-appearance:textfield}
+  .stepper input[type=number]::-webkit-inner-spin-button,
+  .stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
   select{padding:6px;border-radius:6px;border:1px solid #c7d0d9;font-size:13px}
   .note{font-size:11.5px;color:var(--muted);margin-top:6px}
   #nochart{display:none;padding:20px;color:var(--danger);font-weight:600}
@@ -87,7 +95,12 @@
       <div class="stat">Upstream discharge now<b id="qnow">–</b></div>
       <div class="stat">Reach<b id="reachstat">–</b></div>
       <div class="stat">Ensemble<b>50 members · 72 h</b></div>
-      <button onclick="advance()">Advance simulation +6 h ▸</button>
+      <div class="stepper">
+        <label>Advance simulation</label>
+        <button onclick="advance(-1)" title="Go back">−</button>
+        <input type="number" id="advHours" value="6" min="1" max="72">
+        <button onclick="advance(1)" title="Go forward">+</button>
+      </div>
     </div>
   </div>
 
@@ -163,7 +176,9 @@ async function init(){
   META=await j("/api/meta");
   META.cell_size_m = (META.chainage_km.length>1)
     ? (META.chainage_km[1]-META.chainage_km[0])*1000 : 10;
-  $("simhour").textContent="t + "+META.sim_hour+" h";
+  const saved=localStorage.getItem("naditwin_simhour");
+  const simH=(saved!==null)?parseInt(saved):META.sim_hour;
+  $("simhour").textContent=simH+" h";
   $("reachstat").textContent=META.reach_km+" km · "+META.n_cells+" stations";
   const sel=$("assetSel");
   sel.innerHTML=META.assets.map(a=>`<option value="${a.id}">${a.id} — ${a.name}</option>`).join("");
@@ -354,9 +369,12 @@ async function drawScore(){
   $("scorenote").textContent=s.note||"";
 }
 
-async function advance(){
-  const r=await j("/api/advance?hours=6",{method:"POST"});
-  $("simhour").textContent="t + "+r.sim_hour+" h";
+async function advance(direction=1){
+  const h=parseInt($("advHours").value)||6;
+  const hours=h*direction;
+  const r=await j("/api/advance?hours="+hours,{method:"POST"});
+  localStorage.setItem("naditwin_simhour",r.sim_hour);
+  $("simhour").textContent=r.sim_hour+" h";
   await refreshAll();
 }
 
