@@ -18,8 +18,6 @@
   header{background:#0b3556;color:#fff;padding:14px 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
   header h1{margin:0;font-size:22px;letter-spacing:.5px}
   header .sub{opacity:.8;font-size:13px}
-  .banner{background:#fff3cd;color:#6b4b00;border-bottom:1px solid #e6c96a;
-          padding:8px 22px;font-size:13px;font-weight:600}
   .wrap{max-width:1280px;margin:0 auto;padding:18px 22px;display:grid;
         grid-template-columns:2fr 1fr;gap:16px}
   .card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);
@@ -29,6 +27,19 @@
   .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
   .stat{background:#eef3f8;border-radius:8px;padding:8px 14px;font-size:13px}
   .stat b{font-size:17px;display:block;color:#0b3556}
+  .river-sel select{padding:6px 10px;border-radius:6px;border:1.5px solid #0b3556;
+                     font-size:13px;color:#0b3556;font-weight:600;cursor:pointer}
+  .river-sel{display:flex;align-items:center;gap:8px}
+  .river-sel label{font-size:12px;color:var(--muted)}
+  .stepper{display:flex;align-items:center;gap:0;border:2px solid #0b3556;border-radius:8px;overflow:hidden}
+  .stepper label{background:#eef3f8;padding:6px 10px;font-size:12px;color:#0b3556;font-weight:600;white-space:nowrap;border-right:1px solid #c7d0d9}
+  .stepper button{border-radius:0;padding:6px 14px;font-size:18px;line-height:1;background:#0b3556;border:none}
+  .stepper button:hover{background:#124a77}
+  .stepper input[type=number]{width:62px;border:none;border-left:1px solid #c7d0d9;
+         border-right:1px solid #c7d0d9;padding:6px 4px;font-size:14px;font-weight:700;
+         text-align:center;color:#0b3556;outline:none;-moz-appearance:textfield}
+  .stepper input[type=number]::-webkit-inner-spin-button,
+  .stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
   .legend{font-size:12px;color:var(--muted);margin-top:4px}
   .legend span{display:inline-block;margin-right:14px}
   .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
@@ -50,14 +61,6 @@
   button{background:#0b3556;color:#fff;border:0;border-radius:6px;padding:8px 14px;
          font-size:13px;cursor:pointer}
   button:hover{background:#124a77}
-  .stepper{display:flex;align-items:center;gap:0;border:2px solid #0b3556;border-radius:8px;overflow:hidden}
-  .stepper label{background:#eef3f8;padding:6px 10px;font-size:12px;color:#0b3556;font-weight:600;white-space:nowrap;border-right:1px solid #c7d0d9}
-  .stepper button{border-radius:0;padding:6px 14px;font-size:18px;line-height:1;background:#0b3556;border:none}
-  .stepper button:hover{background:#124a77}
-  .stepper input[type=number]{width:62px;border:none;border-left:1px solid #c7d0d9;border-right:1px solid #c7d0d9;
-         padding:6px 4px;font-size:14px;font-weight:700;text-align:center;color:#0b3556;outline:none;-moz-appearance:textfield}
-  .stepper input[type=number]::-webkit-inner-spin-button,
-  .stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
   select{padding:6px;border-radius:6px;border:1px solid #c7d0d9;font-size:13px}
   .note{font-size:11.5px;color:var(--muted);margin-top:6px}
   #nochart{display:none;padding:20px;color:var(--danger);font-weight:600}
@@ -66,39 +69,141 @@
   .maplegend{font-size:12px;color:var(--muted);margin-top:6px}
   .maplegend span{display:inline-block;margin-right:14px}
   .swatch{display:inline-block;width:18px;height:3px;margin-right:5px;vertical-align:2px}
+  /* refresh / auto-advance bar */
+  .refresh-bar{display:flex;align-items:center;gap:14px;padding:6px 14px;
+               background:#f0f4f8;border-radius:6px;font-size:12px;color:#37474f;flex-wrap:wrap}
+  .refresh-bar b{color:#0b3556}
+  .refresh-bar select{padding:3px 8px;border-radius:5px;border:1px solid #c7d0d9;font-size:12px}
+  /* auto-advance pill */
+  .aa-pill{display:flex;align-items:center;gap:6px;background:#e8f0fe;
+           border:1px solid #b3c6f7;border-radius:20px;padding:3px 10px;font-size:12px;color:#1a3a7a}
+  .aa-pill select{background:transparent;border:none;font-size:12px;color:#1a3a7a;
+                  font-weight:600;padding:0 2px;outline:none;cursor:pointer}
+  .aa-pill.off{background:#f0f4f8;border-color:#c7d0d9;color:var(--muted)}
+  /* sim-clock highlight when auto-advancing */
+  .advancing b{color:#1565c0!important;animation:clockTick .4s ease}
+  @keyframes clockTick{0%{opacity:.3}100%{opacity:1}}
+  .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;
+         background:#43a047;margin-right:4px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  /* loading overlay */
+  #loadOverlay{position:fixed;inset:0;background:#f0f4f8;display:flex;
+               flex-direction:column;align-items:center;justify-content:center;
+               z-index:9999;transition:opacity .4s}
+  #loadOverlay.done{opacity:0;pointer-events:none}
+  .spinner{width:48px;height:48px;border:5px solid #c7d0d9;
+           border-top-color:#0b3556;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #loadMsg{margin-top:16px;font-size:14px;color:#0b3556;font-weight:600}
+  /* map asset markers */
+  .map-asset-wrap{width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+  .map-asset-dot{
+    width:14px;height:14px;border-radius:50%;
+    border:2.5px solid #fff;background:#ff1744;
+    box-shadow:0 1px 5px rgba(0,0,0,.45);
+    transition:background .4s,width .3s,height .3s;
+  }
+  .map-asset-dot.DANGER{width:20px;height:20px;background:#c62828;border:3px solid #fff;animation:dangerRing 1.4s ease-out infinite}
+  .map-asset-dot.WARNING{background:#ef6c00}
+  .map-asset-dot.WATCH  {background:#f9a825}
+  .map-asset-dot.SAFE   {background:#2e7d32}
+  @keyframes dangerRing{
+    0%  {box-shadow:0 0 0 0    rgba(198,40,40,.85)}
+    70% {box-shadow:0 0 0 14px rgba(198,40,40,0)}
+    100%{box-shadow:0 0 0 0    rgba(198,40,40,0)}
+  }
+  .leaflet-div-icon{background:transparent!important;border:none!important}
 </style>
 </head>
 <body>
+<div id="loadOverlay">
+  <div class="spinner"></div>
+  <div id="loadMsg">Loading NadiTwin…</div>
+</div>
 <header>
   <h1>RIVER EYE</h1>
   <div class="sub" id="headsub">Mula-Mutha River Intelligence · Sangam → Manjari Reach</div>
 </header>
+
 <div class="wrap" style="padding-bottom:0">
   <div class="card full">
     <h2>Reach location — Sangam → Manjari (traced from KML, real polygon + extracted centerline)</h2>
     <div id="map"></div>
     <div class="maplegend">
-      <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon (from KML)</span>
-      <span><span class="swatch" style="background:#ffee58"></span>Extracted centerline / chainage (used for all charts below)</span>
-      <span><span class="swatch" style="background:#ff1744"></span>Demo assets (illustrative placement, not verified real infrastructure)</span>
-      <span><span class="swatch" style="background:#2962ff"></span>Named localities (Sangam, Bund Garden, Dhanori…)</span>
-      <span id="mapEngineLabel">Basemap: Satellite / Street toggle top-right of map</span>
+      <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
+      <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px">
+        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#ffee58" stroke="#ffd600" stroke-width="1"/></svg>Minor chainage (~200 m)
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px">
+        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#ffe000" stroke="#ffd600" stroke-width="1.5"/></svg>Major chainage (~1 km)
+      </span>
+      <span><span class="swatch" style="background:#2962ff"></span>Named localities</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
+        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#c62828" stroke="#fff" stroke-width="2"/></svg>DANGER
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
+        <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#ef6c00" stroke="#fff" stroke-width="1.5"/></svg>WARNING
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
+        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#f9a825" stroke="#fff" stroke-width="1.5"/></svg>WATCH
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
+        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/></svg>SAFE
+      </span>
+      <span id="mapEngineLabel">Basemap: Satellite / Street toggle top-right</span>
     </div>
   </div>
 </div>
 
 <div class="wrap">
-
   <div class="card full">
+
+    <!-- ── refresh + auto-advance bar ── -->
+    <div class="refresh-bar" style="margin-bottom:10px">
+      <span><span class="pulse"></span><b id="liveStatus">Live</b></span>
+      <span>Last updated: <b id="lastUpdated">–</b></span>
+
+      <span>Refresh every:
+        <select id="refreshInterval" onchange="setRefreshInterval(this.value)">
+          <option value="30">30 s</option>
+          <option value="60" selected>1 min</option>
+          <option value="300">5 min</option>
+          <option value="600">10 min</option>
+          <option value="0">Off</option>
+        </select>
+      </span>
+
+      <!-- AUTO-ADVANCE: each refresh also moves the simulation clock forward -->
+      <span class="aa-pill" id="aaPill">
+        ⏩ Auto-advance sim:
+        <select id="autoAdvH" onchange="onAutoAdvChange()">
+          <option value="0">Off</option>
+          <option value="1">+1 h / refresh</option>
+          <option value="3">+3 h / refresh</option>
+          <option value="6" selected>+6 h / refresh</option>
+          <option value="12">+12 h / refresh</option>
+          <option value="24">+24 h / refresh</option>
+        </select>
+      </span>
+
+      <span id="nextRefresh" style="color:var(--muted)"></span>
+    </div>
+
+    <!-- stats + river selector + manual stepper -->
     <div class="row">
-      <div class="stat">Simulation clock<b id="simhour">–</b></div>
+      <div class="stat" id="simclockStat">Simulation clock<b id="simhour">–</b></div>
       <div class="stat">Upstream discharge now<b id="qnow">–</b></div>
       <div class="stat">Reach<b id="reachstat">–</b></div>
       <div class="stat">Ensemble<b>50 members · 72 h</b></div>
+      <div class="river-sel">
+        <label>River</label>
+        <select id="riverSel" onchange="switchRiver(this.value)"></select>
+      </div>
       <div class="stepper">
-        <label>Advance simulation</label>
+        <label>Manual step</label>
         <button onclick="advance(-1)" title="Go back">−</button>
-        <input type="number" id="advHours" value="6" min="1" max="72">
+        <input type="number" id="advHours" value="6" min="1" max="24">
         <button onclick="advance(1)" title="Go forward">+</button>
       </div>
     </div>
@@ -137,13 +242,13 @@
   <div class="card">
     <h2>Active alerts</h2>
     <div id="alerts"></div>
-    <div class="note">Alert semantics: probability of exceedance + time-to-threshold + current margin. Confidence stated on every alert.</div>
+    <div class="note">Probability of exceedance + time-to-threshold + current margin.</div>
   </div>
 
   <div class="card full">
     <h2>Margin board — margin to threshold per protected asset</h2>
     <div class="board" id="board"></div>
-    <div class="note">Status bands: SAFE &lt;10% · WATCH ≥10% · WARNING ≥30% · DANGER ≥60% probability of 72 h exceedance (or margin already ≤ 0).</div>
+    <div class="note">SAFE &lt;10% · WATCH ≥10% · WARNING ≥30% · DANGER ≥60% probability of 72 h exceedance.</div>
   </div>
 
   <div class="card full">
@@ -151,137 +256,239 @@
     <table id="score"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table>
     <div class="note" id="scorenote"></div>
   </div>
-
 </div>
 
 <script>
-// ---- Google Maps config -----------------------------------------------
-// Paste your own Google Maps JavaScript API key here to use Google Maps
-// as the basemap. Leave it blank to automatically fall back to the
-// Leaflet satellite/street map (Esri / OpenStreetMap tiles) below —
-// the dashboard works either way.
 const GOOGLE_MAPS_API_KEY = "";
-// -------------------------------------------------------------------------
 
-let META=null, profileChart=null, hydroChart=null;
+let META=null, profileChart=null, hydroChart=null, ACTIVE_RIVER=null, _leafletMap=null;
+let _refreshTimer=null, _nextRefreshAt=null, _countdownTimer=null;
+let _assetMarkers={};
+
+// ── helpers ──────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
-
 async function j(u,opt){const r=await fetch(u,opt);return r.json();}
-
 function decimate(arr,step){const o=[];for(let i=0;i<arr.length;i+=step)o.push(arr[i]);return o;}
-const STEP=4; // plot every 4th cell (40 m) for speed; data itself is 10 m
+const STEP=4;
 
+// ── auto-advance UI ───────────────────────────────────────────────────────
+function onAutoAdvChange(){
+  const v=parseInt($("autoAdvH").value)||0;
+  $("aaPill").className="aa-pill"+(v===0?" off":"");
+}
+onAutoAdvChange();
+
+// ── countdown display ─────────────────────────────────────────────────────
+function _updateLastUpdated(){$("lastUpdated").textContent=new Date().toLocaleTimeString();}
+function _updateCountdown(){
+  if(!_nextRefreshAt){$("nextRefresh").textContent="";return;}
+  const s=Math.max(0,Math.round((_nextRefreshAt-Date.now())/1000));
+  $("nextRefresh").textContent=s>0?"next in "+s+"s":"refreshing…";
+}
+
+// ── refresh interval ──────────────────────────────────────────────────────
+function setRefreshInterval(val){
+  if(_refreshTimer)  clearInterval(_refreshTimer);
+  if(_countdownTimer)clearInterval(_countdownTimer);
+  _nextRefreshAt=null; $("nextRefresh").textContent="";
+  const secs=parseInt(val);
+  if(secs<=0)return;
+  async function doRefresh(){
+    _nextRefreshAt=Date.now()+secs*1000;
+    // AUTO-ADVANCE: move simulation clock before fetching new data
+    const advH=parseInt($("autoAdvH").value)||0;
+    if(advH>0){
+      const rp=ACTIVE_RIVER?"&river="+encodeURIComponent(ACTIVE_RIVER):"";
+      const r=await j("/api/advance?hours="+advH+rp,{method:"POST"});
+      // update sim clock display with animation
+      localStorage.setItem("naditwin_simhour_"+(ACTIVE_RIVER||"default"),r.sim_hour);
+      const stat=$("simclockStat");
+      stat.classList.add("advancing");
+      $("simhour").textContent=r.sim_hour+" h";
+      setTimeout(()=>stat.classList.remove("advancing"),500);
+    }
+    await refreshAll();
+    _updateLastUpdated();
+  }
+  _nextRefreshAt=Date.now()+secs*1000;
+  _refreshTimer =setInterval(doRefresh, secs*1000);
+  _countdownTimer=setInterval(_updateCountdown,1000);
+  _updateCountdown();
+}
+
+// ── init ──────────────────────────────────────────────────────────────────
 async function init(){
   if(typeof Chart==="undefined"){$("nochart").style.display="block";}
-  META=await j("/api/meta");
-  META.cell_size_m = (META.chainage_km.length>1)
-    ? (META.chainage_km[1]-META.chainage_km[0])*1000 : 10;
-  const saved=localStorage.getItem("naditwin_simhour");
+  await loadRiverList();
+  await loadRiverData();
+  loadMap();
+  await refreshAll();
+  _updateLastUpdated();
+  setRefreshInterval($("refreshInterval").value);
+}
+
+async function loadRiverList(){
+  try{
+    const raw=await j("/api/rivers");
+    const list=Array.isArray(raw)?raw:[];
+    const sel=$("riverSel");
+    sel.innerHTML=list.map(r=>`<option value="${r.name}">${r.name} (${r.reach_km} km)</option>`).join("");
+    if(!ACTIVE_RIVER&&list.length) ACTIVE_RIVER=list[0].name;
+    if(ACTIVE_RIVER) sel.value=ACTIVE_RIVER;
+  }catch(_){
+    // /api/rivers not yet on server — silently skip, river selector stays empty
+  }
+}
+
+async function loadRiverData(){
+  const param=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
+  META=await j("/api/meta"+param);
+  META.cell_size_m=(META.chainage_km.length>1)
+    ?(META.chainage_km[1]-META.chainage_km[0])*1000:10;
+  const saved=localStorage.getItem("naditwin_simhour_"+(ACTIVE_RIVER||"default"));
   const simH=(saved!==null)?parseInt(saved):META.sim_hour;
   $("simhour").textContent=simH+" h";
   $("reachstat").textContent=META.reach_km+" km · "+META.n_cells+" stations";
-  const sel=$("assetSel");
-  sel.innerHTML=META.assets.map(a=>`<option value="${a.id}">${a.id} — ${a.name}</option>`).join("");
+  $("assetSel").innerHTML=META.assets.map(a=>`<option value="${a.id}">${a.id} — ${a.name}</option>`).join("");
+}
+
+async function switchRiver(name){
+  ACTIVE_RIVER=name;
+  await loadRiverData();
   loadMap();
   await refreshAll();
 }
 
+// ── map ───────────────────────────────────────────────────────────────────
 function loadMap(){
-  if(GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY.trim()!==""){
+  if(GOOGLE_MAPS_API_KEY&&GOOGLE_MAPS_API_KEY.trim()!==""){
     window.initGoogleMap=drawGoogleMap;
     const s=document.createElement("script");
     s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GOOGLE_MAPS_API_KEY)+"&callback=initGoogleMap";
-    s.onerror=()=>{ $("mapEngineLabel").textContent="Google Maps failed to load — showing Leaflet fallback"; drawLeafletMap(); };
+    s.onerror=()=>{$("mapEngineLabel").textContent="Google Maps failed — using Leaflet";drawLeafletMap();};
     document.head.appendChild(s);
-  } else {
-    drawLeafletMap();
-  }
+  }else{drawLeafletMap();}
 }
 
 function drawGoogleMap(){
-  const centerLon=META.lon[Math.floor(META.lon.length/2)];
-  const centerLat=META.lat[Math.floor(META.lat.length/2)];
-  const map=new google.maps.Map($("map"),{
-    center:{lat:centerLat,lng:centerLon}, zoom:13, mapTypeId:"satellite",
-    mapTypeControl:true, streetViewControl:false,
-    mapTypeControlOptions:{position:google.maps.ControlPosition.TOP_RIGHT}
+  const cx=META.lon[Math.floor(META.lon.length/2)];
+  const cy=META.lat[Math.floor(META.lat.length/2)];
+  const map=new google.maps.Map($("map"),{center:{lat:cy,lng:cx},zoom:13,mapTypeId:"satellite",
+    mapTypeControl:true,streetViewControl:false,
+    mapTypeControlOptions:{position:google.maps.ControlPosition.TOP_RIGHT}});
+  new google.maps.Polygon({paths:META.reach_polygon_lonlat.map(([lo,la])=>({lat:la,lng:lo})),
+    strokeColor:"#2dc0fb",strokeWeight:2,fillColor:"#2dc0fb",fillOpacity:.12}).setMap(map);
+  new google.maps.Polyline({path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
+    strokeColor:"#ffee58",strokeWeight:3}).setMap(map);
+  const MS=Math.max(1,Math.round(200/META.cell_size_m));
+  const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
+  META.lat.forEach((la,i)=>{
+    if(i%MS!==0)return;
+    const maj=(i%MJ===0);
+    new google.maps.Marker({position:{lat:la,lng:META.lon[i]},map,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:maj?6:3,
+        fillColor:"#ffee58",fillOpacity:maj?1:.7,strokeColor:"#ffd600",strokeWeight:maj?1.5:.8},
+      title:"Chainage "+META.chainage_km[i].toFixed(2)+" km"});
   });
-
-  new google.maps.Polygon({
-    paths:META.reach_polygon_lonlat.map(([lo,la])=>({lat:la,lng:lo})),
-    strokeColor:"#2dc0fb", strokeWeight:2, fillColor:"#2dc0fb", fillOpacity:.12
-  }).setMap(map);
-
-  new google.maps.Polyline({
-    path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
-    strokeColor:"#ffee58", strokeWeight:3
-  }).setMap(map);
-
   (META.landmarks||[]).forEach(lm=>{
-    const m=new google.maps.Marker({
-      position:{lat:lm.lat,lng:lm.lon}, map,
-      label:{text:lm.name,color:"#0b3556",fontSize:"11px",fontWeight:"600",className:"gmap-locality-label"},
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}
-    });
+    const m=new google.maps.Marker({position:{lat:lm.lat,lng:lm.lon},map,
+      label:{text:lm.name,color:"#0b3556",fontSize:"11px",fontWeight:"600"},
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
     m.addListener("click",()=>new google.maps.InfoWindow({
-      content:`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`
-    }).open(map,m));
+      content:`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`}).open(map,m));
   });
-
+  _assetMarkers={};
   META.assets.forEach(a=>{
-    const m=new google.maps.Marker({
-      position:{lat:a.lat,lng:a.lon}, map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#ff1744",fillOpacity:.95,strokeColor:"#fff",strokeWeight:2}
-    });
+    const m=new google.maps.Marker({position:{lat:a.lat,lng:a.lon},map,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:"#ff1744",fillOpacity:.95,strokeColor:"#fff",strokeWeight:2}});
     m.addListener("click",()=>new google.maps.InfoWindow({
-      content:`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`
-    }).open(map,m));
+      content:`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`}).open(map,m));
+    _assetMarkers[a.id]={gm:m,type:"google"};
   });
-
   const bounds=new google.maps.LatLngBounds();
   META.reach_polygon_lonlat.forEach(([lo,la])=>bounds.extend({lat:la,lng:lo}));
   map.fitBounds(bounds);
-  $("mapEngineLabel").textContent="Basemap: Google Maps (Satellite / Roadmap toggle top-right)";
+  $("mapEngineLabel").textContent="Basemap: Google Maps";
+}
+
+function _assetDivIcon(status){
+  return L.divIcon({className:"",
+    html:`<div class="map-asset-wrap"><div class="map-asset-dot ${status||""}"></div></div>`,
+    iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-13]});
 }
 
 function drawLeafletMap(){
   if(typeof L==="undefined")return;
-  const centerLon=META.lon[Math.floor(META.lon.length/2)];
-  const centerLat=META.lat[Math.floor(META.lat.length/2)];
-  const map=L.map('map').setView([centerLat,centerLon],14);
-
-  const satellite=L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {maxZoom:19,attribution:'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics'}
-  );
-  const streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  if(_leafletMap){_leafletMap.remove();_leafletMap=null;}
+  _assetMarkers={};
+  const cx=META.lon[Math.floor(META.lon.length/2)];
+  const cy=META.lat[Math.floor(META.lat.length/2)];
+  _leafletMap=L.map('map').setView([cy,cx],14);
+  const map=_leafletMap;
+  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,attribution:'Tiles &copy; Esri'});
+  const st=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});
-
-  satellite.addTo(map);   // default view = satellite
-  L.control.layers({"Satellite":satellite,"Street map":streets},null,{position:'topright'}).addTo(map);
-
+  sat.addTo(map);
+  L.control.layers({"Satellite":sat,"Street map":st},null,{position:'topright'}).addTo(map);
   const poly=META.reach_polygon_lonlat.map(([lo,la])=>[la,lo]);
   L.polygon(poly,{color:'#2dc0fb',weight:2,fillOpacity:.12}).addTo(map);
-  const center=META.lat.map((la,i)=>[la,META.lon[i]]);
-  L.polyline(center,{color:'#ffee58',weight:3}).addTo(map);
-
+  L.polyline(META.lat.map((la,i)=>[la,META.lon[i]]),{color:'#ffee58',weight:3}).addTo(map);
+  // chainage dots
+  const MS=Math.max(1,Math.round(200/META.cell_size_m));
+  const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
+  META.lat.forEach((la,i)=>{
+    if(i%MS!==0)return;
+    const maj=(i%MJ===0), ch=META.chainage_km[i];
+    L.circleMarker([la,META.lon[i]],{radius:maj?7:3,color:'#ffd600',fillColor:'#ffee58',
+      fillOpacity:maj?1:.70,weight:maj?2:1})
+      .bindPopup(maj?`<b>Chainage ${ch.toFixed(2)} km</b>`:`Chainage ${ch.toFixed(2)} km`)
+      .addTo(map);
+  });
   (META.landmarks||[]).forEach(lm=>{
     L.circleMarker([lm.lat,lm.lon],{radius:6,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:2})
-      .bindPopup(`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`)
-      .addTo(map);
+      .bindPopup(`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`).addTo(map);
   });
   META.assets.forEach(a=>{
-    L.circleMarker([a.lat,a.lon],{radius:6,color:'#ff1744',fillColor:'#ff1744',fillOpacity:.95,weight:2})
-      .bindPopup(`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`)
+    const mk=L.marker([a.lat,a.lon],{icon:_assetDivIcon("")})
+      .bindPopup(`<b>${a.id}</b> — ${a.name}<br>Chainage ${(a.chainage_m/1000).toFixed(2)} km<br><span style="color:#888;font-size:11px">Status updates on refresh</span>`)
       .addTo(map);
+    _assetMarkers[a.id]={lf:mk,type:"leaflet"};
   });
-  const bounds=L.latLngBounds(poly);
-  map.fitBounds(bounds,{padding:[20,20]});
-  $("mapEngineLabel").textContent="Basemap: Leaflet — Satellite / Street toggle top-right of map";
+  map.fitBounds(L.latLngBounds(poly),{padding:[20,20]});
+  $("mapEngineLabel").textContent="Basemap: Leaflet — Satellite / Street toggle top-right";
 }
 
+const _SCOL={DANGER:'#c62828',WARNING:'#ef6c00',WATCH:'#856404',SAFE:'#2e7d32'};
+
+function updateMapDanger(margins){
+  if(!margins||!margins.length)return;
+  margins.forEach(m=>{
+    const entry=_assetMarkers[m.id];
+    if(!entry)return;
+    const html=`<b>${m.id}</b> — ${m.name}<br>`+
+      `Status: <b style="color:${_SCOL[m.status]||'#333'}">${m.status}</b><br>`+
+      `Margin: ${m.margin_now_m>0?"+":""}${m.margin_now_m} m<br>`+
+      `P(exceed 72 h): ${(m.p_exceed_72h*100).toFixed(0)}%`+
+      (m.time_to_threshold_h?`<br>~${m.time_to_threshold_h} h to threshold`:"");
+    if(entry.type==="leaflet"){
+      const el=entry.lf.getElement();
+      if(el){const d=el.querySelector('.map-asset-dot');if(d)d.className='map-asset-dot '+m.status;}
+      entry.lf.setPopupContent(html);
+    }else if(entry.type==="google"){
+      const sc={DANGER:10,WARNING:8,WATCH:7,SAFE:6};
+      const co={DANGER:'#c62828',WARNING:'#ef6c00',WATCH:'#f9a825',SAFE:'#2e7d32'};
+      entry.gm.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:sc[m.status]||7,
+        fillColor:co[m.status]||'#ff1744',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2});
+    }
+  });
+}
+
+// ── data refresh ──────────────────────────────────────────────────────────
 async function refreshAll(){
-  const st=await j("/api/state");
+  const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const rp2=ACTIVE_RIVER?"&river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const st=await j("/api/state"+rp);
   $("qnow").textContent=st.q_now+" m³/s (synthetic)";
   window._wseNow=st.wse;
   await drawProfile();
@@ -292,13 +499,14 @@ async function refreshAll(){
 }
 
 async function drawProfile(){
+  const rp2=ACTIVE_RIVER?"&river="+encodeURIComponent(ACTIVE_RIVER):"";
   if(typeof Chart==="undefined")return;
   const lead=parseInt($("lead").value);
-  const fc=await j("/api/forecast/profile?lead="+lead);
+  const fc=await j("/api/forecast/profile?lead="+lead+rp2);
   const x=decimate(META.chainage_km,STEP);
-  const bed=decimate(META.bed,STEP), crest=decimate(META.crest,STEP);
+  const bed=decimate(META.bed,STEP),crest=decimate(META.crest,STEP);
   const sig=decimate(META.sigma_bed,STEP);
-  const bedHi=bed.map((v,i)=>v+sig[i]), bedLo=bed.map((v,i)=>v-sig[i]);
+  const bedHi=bed.map((v,i)=>v+sig[i]),bedLo=bed.map((v,i)=>v-sig[i]);
   const ds=[
     {label:"P90",data:decimate(fc.p90,STEP),borderWidth:0,pointRadius:0,fill:false,backgroundColor:"rgba(126,87,194,.18)"},
     {label:"P10",data:decimate(fc.p10,STEP),borderWidth:0,pointRadius:0,fill:"-1",backgroundColor:"rgba(126,87,194,.18)"},
@@ -318,10 +526,11 @@ async function drawProfile(){
 }
 
 async function drawHydro(){
+  const rp2=ACTIVE_RIVER?"&river="+encodeURIComponent(ACTIVE_RIVER):"";
   if(typeof Chart==="undefined")return;
   const a=META.assets.find(a=>a.id===$("assetSel").value)||META.assets[0];
   const cell=Math.round(a.chainage_m/META.cell_size_m);
-  const h=await j("/api/hydrograph?cell="+cell);
+  const h=await j("/api/hydrograph?cell="+cell+rp2);
   const past=h.observed.length;
   const labels=[];
   for(let i=-past+1;i<=0;i++)labels.push(i);
@@ -344,7 +553,8 @@ async function drawHydro(){
 }
 
 async function drawBoard(){
-  const ms=await j("/api/margins");
+  const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const ms=await j("/api/margins"+rp);
   $("board").innerHTML=ms.map(m=>`
     <div class="asset ${m.status}">
       <b>${m.id}</b>${m.name}
@@ -352,10 +562,12 @@ async function drawBoard(){
       <div>P(exceed 72 h): ${(m.p_exceed_72h*100).toFixed(0)}%</div>
       <div>${m.time_to_threshold_h?("~"+m.time_to_threshold_h+" h to threshold"):"no median crossing"}</div>
     </div>`).join("");
+  updateMapDanger(ms);
 }
 
 async function drawAlerts(){
-  const al=await j("/api/alerts");
+  const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const al=await j("/api/alerts"+rp);
   $("alerts").innerHTML=al.length?al.map(a=>`
     <div class="alert ${a.severity}"><b>[${a.severity}]</b> ${a.message}
       <small>${a.confidence_note}</small></div>`).join("")
@@ -363,7 +575,8 @@ async function drawAlerts(){
 }
 
 async function drawScore(){
-  const s=await j("/api/scorecard");
+  const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const s=await j("/api/scorecard"+rp);
   document.querySelector("#score tbody").innerHTML=
     s.rows.map(r=>`<tr><td>${r.metric}</td><td><b>${r.value}</b></td></tr>`).join("");
   $("scorenote").textContent=s.note||"";
@@ -371,14 +584,27 @@ async function drawScore(){
 
 async function advance(direction=1){
   const h=parseInt($("advHours").value)||6;
-  const hours=h*direction;
-  const r=await j("/api/advance?hours="+hours,{method:"POST"});
-  localStorage.setItem("naditwin_simhour",r.sim_hour);
+  const rp=ACTIVE_RIVER?"&river="+encodeURIComponent(ACTIVE_RIVER):"";
+  const r=await j("/api/advance?hours="+(h*direction)+rp,{method:"POST"});
+  localStorage.setItem("naditwin_simhour_"+(ACTIVE_RIVER||"default"),r.sim_hour);
   $("simhour").textContent=r.sim_hour+" h";
   await refreshAll();
+  _updateLastUpdated();
 }
 
-init();
+(async()=>{
+  const overlay=$("loadOverlay");
+  const msg=$("loadMsg");
+  try{
+    await init();
+    overlay.classList.add("done");
+    setTimeout(()=>overlay.style.display="none",450);
+  }catch(e){
+    msg.textContent="Load error: "+e.message;
+    msg.style.color="var(--danger)";
+    console.error(e);
+  }
+})();
 </script>
 </body>
 </html>
