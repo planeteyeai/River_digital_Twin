@@ -104,18 +104,13 @@
     transition:background .4s;
   }
   .map-asset-dot.DANGER{background:#c62828;animation:dangerRing 1.4s ease-out infinite}
-  .map-asset-dot.WARNING{background:#fdd835;animation:warnRing 1.4s ease-out infinite}
+  .map-asset-dot.WARNING{background:#fdd835}
   .map-asset-dot.WATCH  {background:#2e7d32}
   .map-asset-dot.SAFE   {background:#1565c0}
   @keyframes dangerRing{
     0%  {box-shadow:0 0 0 0    rgba(198,40,40,.85)}
     70% {box-shadow:0 0 0 14px rgba(198,40,40,0)}
     100%{box-shadow:0 0 0 0    rgba(198,40,40,0)}
-  }
-  @keyframes warnRing{
-    0%  {box-shadow:0 0 0 0    rgba(253,216,53,.85)}
-    70% {box-shadow:0 0 0 14px rgba(253,216,53,0)}
-    100%{box-shadow:0 0 0 0    rgba(253,216,53,0)}
   }
   .leaflet-div-icon{background:transparent!important;border:none!important}
 </style>
@@ -138,9 +133,8 @@
       <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
       <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
       <span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px">
-        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#ffe000"/></svg>Chainage (~1 km)
+        <svg width="18" height="18"><circle cx="9" cy="9" r="4" fill="#ffe000"/></svg>Chainage (~1 km)
       </span>
-      <span><span class="swatch" style="background:#2962ff"></span>Named localities</span>
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
         <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#c62828"/></svg>DANGER
       </span>
@@ -153,7 +147,6 @@
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
         <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#1565c0"/></svg>SAFE
       </span>
-      <span id="mapEngineLabel">Basemap: Satellite / Street toggle top-right</span>
     </div>
   </div>
 </div>
@@ -239,7 +232,9 @@
       <span><span class="dot" style="background:var(--fc)"></span>Ensemble median</span>
       <span><span class="dot" style="background:#d32f2f"></span>Asset threshold</span>
     </div>
-    <div class="board" id="boardMini" style="margin-top:14px"></div>
+    <h2 style="margin-top:14px">Margin board — margin to threshold per protected asset</h2>
+    <div class="board" id="boardMini"></div>
+    <div class="note">SAFE &lt;10% · WATCH ≥10% · WARNING ≥30% · DANGER ≥60% probability of 72 h exceedance.</div>
   </div>
 
   <div class="card">
@@ -368,7 +363,7 @@ function loadMap(){
     window.initGoogleMap=drawGoogleMap;
     const s=document.createElement("script");
     s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GOOGLE_MAPS_API_KEY)+"&callback=initGoogleMap";
-    s.onerror=()=>{$("mapEngineLabel").textContent="Google Maps failed — using Leaflet";drawLeafletMap();};
+    s.onerror=()=>{drawLeafletMap();};
     document.head.appendChild(s);
   }else{drawLeafletMap();}
 }
@@ -387,14 +382,14 @@ function drawGoogleMap(){
   META.lat.forEach((la,i)=>{
     if(i%MJ!==0)return;
     new google.maps.Marker({position:{lat:la,lng:META.lon[i]},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:4,
         fillColor:"#ffe000",fillOpacity:1,strokeWeight:0},
       title:"Chainage "+META.chainage_km[i].toFixed(2)+" km"});
   });
   (META.landmarks||[]).forEach(lm=>{
     const m=new google.maps.Marker({position:{lat:lm.lat,lng:lm.lon},map,
       label:{text:lm.name,color:"#0b3556",fontSize:"11px",fontWeight:"600"},
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeWeight:0}});
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:16,fillColor:"#2962ff",fillOpacity:1,strokeWeight:0}});
     m.addListener("click",()=>new google.maps.InfoWindow({
       content:`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`}).open(map,m));
   });
@@ -409,7 +404,6 @@ function drawGoogleMap(){
   const bounds=new google.maps.LatLngBounds();
   META.reach_polygon_lonlat.forEach(([lo,la])=>bounds.extend({lat:la,lng:lo}));
   map.fitBounds(bounds);
-  $("mapEngineLabel").textContent="Basemap: Google Maps";
 }
 
 function _assetDivIcon(status){
@@ -435,18 +429,18 @@ function drawLeafletMap(){
   const poly=META.reach_polygon_lonlat.map(([lo,la])=>[la,lo]);
   L.polygon(poly,{color:'#2dc0fb',weight:2,fillOpacity:.12}).addTo(map);
   L.polyline(META.lat.map((la,i)=>[la,META.lon[i]]),{color:'#ffee58',weight:3}).addTo(map);
-  // chainage dots — only major (~1 km) chainage shown
+  // chainage dots — only major (~1 km) chainage shown, yellow, small (visible when zoomed in)
   const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
   META.lat.forEach((la,i)=>{
     if(i%MJ!==0)return;
     const ch=META.chainage_km[i];
-    L.circleMarker([la,META.lon[i]],{radius:7,color:'#ffe000',fillColor:'#ffe000',
+    L.circleMarker([la,META.lon[i]],{radius:4,color:'#ffe000',fillColor:'#ffe000',
       fillOpacity:1,weight:0})
       .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b>`)
       .addTo(map);
   });
   (META.landmarks||[]).forEach(lm=>{
-    L.circleMarker([lm.lat,lm.lon],{radius:6,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:0})
+    L.circleMarker([lm.lat,lm.lon],{radius:16,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:0})
       .bindPopup(`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`).addTo(map);
   });
   META.assets.forEach(a=>{
@@ -456,7 +450,6 @@ function drawLeafletMap(){
     _assetMarkers[a.id]={lf:mk,type:"leaflet"};
   });
   map.fitBounds(L.latLngBounds(poly),{padding:[20,20]});
-  $("mapEngineLabel").textContent="Basemap: Leaflet — Satellite / Street toggle top-right";
 }
 
 const _SCOL={DANGER:'#c62828',WARNING:'#a68b00',WATCH:'#2e7d32',SAFE:'#1565c0'};
