@@ -232,9 +232,6 @@
       <span><span class="dot" style="background:var(--fc)"></span>Ensemble median</span>
       <span><span class="dot" style="background:#d32f2f"></span>Asset threshold</span>
     </div>
-    <h2 style="margin-top:14px">Margin board — margin to threshold per protected asset</h2>
-    <div class="board" id="boardMini"></div>
-    <div class="note">SAFE &lt;10% · WATCH ≥10% · WARNING ≥30% · DANGER ≥60% probability of 72 h exceedance.</div>
   </div>
 
   <div class="card">
@@ -555,7 +552,6 @@ async function drawBoard(){
       <div>${m.time_to_threshold_h?("~"+m.time_to_threshold_h+" h to threshold"):"no median crossing"}</div>
     </div>`).join("");
   $("board").innerHTML=cardsHtml;
-  if($("boardMini"))$("boardMini").innerHTML=cardsHtml;
   updateMapDanger(ms);
 }
 
