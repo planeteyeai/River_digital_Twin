@@ -10,7 +10,7 @@
 <style>
   :root{
     --obs:#1f77b4; --fc:#7e57c2; --bed:#8d6e63; --crest:#37474f;
-    --danger:#c62828; --warn:#ef6c00; --watch:#f9a825; --safe:#2e7d32;
+    --danger:#c62828; --warn:#fdd835; --watch:#2e7d32; --safe:#1565c0;
     --bg:#f4f6f8; --card:#ffffff; --ink:#1a2733; --muted:#5f6b76;
   }
   *{box-sizing:border-box}
@@ -48,12 +48,12 @@
   .asset{border-radius:8px;padding:10px;color:#fff;font-size:12.5px}
   .asset b{font-size:14px;display:block;margin-bottom:2px}
   .asset .m{font-size:20px;font-weight:700}
-  .DANGER{background:var(--danger)} .WARNING{background:var(--warn)}
-  .WATCH{background:var(--watch);color:#3a2f00} .SAFE{background:var(--safe)}
+  .DANGER{background:var(--danger)} .WARNING{background:var(--warn);color:#3a2f00}
+  .WATCH{background:var(--watch)} .SAFE{background:var(--safe)}
   .alert{border-left:4px solid var(--danger);background:#fdecea;padding:8px 10px;
          margin-bottom:8px;border-radius:4px;font-size:13px}
-  .alert.WATCH{border-color:var(--watch);background:#fff8e1}
-  .alert.WARNING{border-color:var(--warn);background:#fff3e0}
+  .alert.WATCH{border-color:var(--watch);background:#eaf5ea}
+  .alert.WARNING{border-color:var(--warn);background:#fffde7}
   .alert small{color:var(--muted);display:block;margin-top:3px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   td,th{padding:6px 8px;border-bottom:1px solid #e3e8ee;text-align:left}
@@ -99,18 +99,23 @@
   .map-asset-wrap{width:26px;height:26px;display:flex;align-items:center;justify-content:center}
   .map-asset-dot{
     width:14px;height:14px;border-radius:50%;
-    border:2.5px solid #fff;background:#ff1744;
+    background:#c62828;
     box-shadow:0 1px 5px rgba(0,0,0,.45);
-    transition:background .4s,width .3s,height .3s;
+    transition:background .4s;
   }
-  .map-asset-dot.DANGER{width:20px;height:20px;background:#c62828;border:3px solid #fff;animation:dangerRing 1.4s ease-out infinite}
-  .map-asset-dot.WARNING{background:#ef6c00}
-  .map-asset-dot.WATCH  {background:#f9a825}
-  .map-asset-dot.SAFE   {background:#2e7d32}
+  .map-asset-dot.DANGER{background:#c62828;animation:dangerRing 1.4s ease-out infinite}
+  .map-asset-dot.WARNING{background:#fdd835;animation:warnRing 1.4s ease-out infinite}
+  .map-asset-dot.WATCH  {background:#2e7d32}
+  .map-asset-dot.SAFE   {background:#1565c0}
   @keyframes dangerRing{
     0%  {box-shadow:0 0 0 0    rgba(198,40,40,.85)}
     70% {box-shadow:0 0 0 14px rgba(198,40,40,0)}
     100%{box-shadow:0 0 0 0    rgba(198,40,40,0)}
+  }
+  @keyframes warnRing{
+    0%  {box-shadow:0 0 0 0    rgba(253,216,53,.85)}
+    70% {box-shadow:0 0 0 14px rgba(253,216,53,0)}
+    100%{box-shadow:0 0 0 0    rgba(253,216,53,0)}
   }
   .leaflet-div-icon{background:transparent!important;border:none!important}
 </style>
@@ -133,23 +138,20 @@
       <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
       <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
       <span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px">
-        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#ffee58" stroke="#ffd600" stroke-width="1"/></svg>Minor chainage (~200 m)
-      </span>
-      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:14px">
-        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#ffe000" stroke="#ffd600" stroke-width="1.5"/></svg>Major chainage (~1 km)
+        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#ffe000"/></svg>Chainage (~1 km)
       </span>
       <span><span class="swatch" style="background:#2962ff"></span>Named localities</span>
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
-        <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#c62828" stroke="#fff" stroke-width="2"/></svg>DANGER
+        <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#c62828"/></svg>DANGER
       </span>
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
-        <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#ef6c00" stroke="#fff" stroke-width="1.5"/></svg>WARNING
+        <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#fdd835"/></svg>WARNING
       </span>
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
-        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#f9a825" stroke="#fff" stroke-width="1.5"/></svg>WATCH
+        <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#2e7d32"/></svg>WATCH
       </span>
       <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
-        <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#2e7d32" stroke="#fff" stroke-width="1.5"/></svg>SAFE
+        <svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#1565c0"/></svg>SAFE
       </span>
       <span id="mapEngineLabel">Basemap: Satellite / Street toggle top-right</span>
     </div>
@@ -210,7 +212,7 @@
   </div>
 
   <div class="card full">
-    <h2>Longitudinal profile — observed vs forecast (confidence fog = P10–P90)</h2>
+    <h2>River stage — observed vs forecast (confidence fog = P10–P90)</h2>
     <div id="nochart">Chart.js failed to load (offline?). APIs still work at /api/*.</div>
     <canvas id="profile"></canvas>
     <div class="row" style="margin-top:8px">
@@ -237,6 +239,7 @@
       <span><span class="dot" style="background:var(--fc)"></span>Ensemble median</span>
       <span><span class="dot" style="background:#d32f2f"></span>Asset threshold</span>
     </div>
+    <div class="board" id="boardMini" style="margin-top:14px"></div>
   </div>
 
   <div class="card">
@@ -380,27 +383,25 @@ function drawGoogleMap(){
     strokeColor:"#2dc0fb",strokeWeight:2,fillColor:"#2dc0fb",fillOpacity:.12}).setMap(map);
   new google.maps.Polyline({path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
     strokeColor:"#ffee58",strokeWeight:3}).setMap(map);
-  const MS=Math.max(1,Math.round(200/META.cell_size_m));
   const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
   META.lat.forEach((la,i)=>{
-    if(i%MS!==0)return;
-    const maj=(i%MJ===0);
+    if(i%MJ!==0)return;
     new google.maps.Marker({position:{lat:la,lng:META.lon[i]},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:maj?6:3,
-        fillColor:"#ffee58",fillOpacity:maj?1:.7,strokeColor:"#ffd600",strokeWeight:maj?1.5:.8},
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,
+        fillColor:"#ffe000",fillOpacity:1,strokeWeight:0},
       title:"Chainage "+META.chainage_km[i].toFixed(2)+" km"});
   });
   (META.landmarks||[]).forEach(lm=>{
     const m=new google.maps.Marker({position:{lat:lm.lat,lng:lm.lon},map,
       label:{text:lm.name,color:"#0b3556",fontSize:"11px",fontWeight:"600"},
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:"#2962ff",fillOpacity:1,strokeWeight:0}});
     m.addListener("click",()=>new google.maps.InfoWindow({
       content:`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`}).open(map,m));
   });
   _assetMarkers={};
   META.assets.forEach(a=>{
     const m=new google.maps.Marker({position:{lat:a.lat,lng:a.lon},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:"#ff1744",fillOpacity:.95,strokeColor:"#fff",strokeWeight:2}});
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:"#c62828",fillOpacity:.95,strokeWeight:0}});
     m.addListener("click",()=>new google.maps.InfoWindow({
       content:`<b>${a.id}</b> — ${a.name}<br>chainage ${(a.chainage_m/1000).toFixed(2)} km`}).open(map,m));
     _assetMarkers[a.id]={gm:m,type:"google"};
@@ -434,19 +435,18 @@ function drawLeafletMap(){
   const poly=META.reach_polygon_lonlat.map(([lo,la])=>[la,lo]);
   L.polygon(poly,{color:'#2dc0fb',weight:2,fillOpacity:.12}).addTo(map);
   L.polyline(META.lat.map((la,i)=>[la,META.lon[i]]),{color:'#ffee58',weight:3}).addTo(map);
-  // chainage dots
-  const MS=Math.max(1,Math.round(200/META.cell_size_m));
+  // chainage dots — only major (~1 km) chainage shown
   const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
   META.lat.forEach((la,i)=>{
-    if(i%MS!==0)return;
-    const maj=(i%MJ===0), ch=META.chainage_km[i];
-    L.circleMarker([la,META.lon[i]],{radius:maj?7:3,color:'#ffd600',fillColor:'#ffee58',
-      fillOpacity:maj?1:.70,weight:maj?2:1})
-      .bindPopup(maj?`<b>Chainage ${ch.toFixed(2)} km</b>`:`Chainage ${ch.toFixed(2)} km`)
+    if(i%MJ!==0)return;
+    const ch=META.chainage_km[i];
+    L.circleMarker([la,META.lon[i]],{radius:7,color:'#ffe000',fillColor:'#ffe000',
+      fillOpacity:1,weight:0})
+      .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b>`)
       .addTo(map);
   });
   (META.landmarks||[]).forEach(lm=>{
-    L.circleMarker([lm.lat,lm.lon],{radius:6,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:2})
+    L.circleMarker([lm.lat,lm.lon],{radius:6,color:'#2962ff',fillColor:'#2962ff',fillOpacity:.95,weight:0})
       .bindPopup(`<b>${lm.name}</b><br>chainage ${lm.chainage_km.toFixed(2)} km`).addTo(map);
   });
   META.assets.forEach(a=>{
@@ -459,7 +459,7 @@ function drawLeafletMap(){
   $("mapEngineLabel").textContent="Basemap: Leaflet — Satellite / Street toggle top-right";
 }
 
-const _SCOL={DANGER:'#c62828',WARNING:'#ef6c00',WATCH:'#856404',SAFE:'#2e7d32'};
+const _SCOL={DANGER:'#c62828',WARNING:'#a68b00',WATCH:'#2e7d32',SAFE:'#1565c0'};
 
 function updateMapDanger(margins){
   if(!margins||!margins.length)return;
@@ -476,10 +476,9 @@ function updateMapDanger(margins){
       if(el){const d=el.querySelector('.map-asset-dot');if(d)d.className='map-asset-dot '+m.status;}
       entry.lf.setPopupContent(html);
     }else if(entry.type==="google"){
-      const sc={DANGER:10,WARNING:8,WATCH:7,SAFE:6};
-      const co={DANGER:'#c62828',WARNING:'#ef6c00',WATCH:'#f9a825',SAFE:'#2e7d32'};
-      entry.gm.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:sc[m.status]||7,
-        fillColor:co[m.status]||'#ff1744',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2});
+      const co={DANGER:'#c62828',WARNING:'#fdd835',WATCH:'#2e7d32',SAFE:'#1565c0'};
+      entry.gm.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:7,
+        fillColor:co[m.status]||'#c62828',fillOpacity:.95,strokeWeight:0});
     }
   });
 }
@@ -555,13 +554,15 @@ async function drawHydro(){
 async function drawBoard(){
   const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
   const ms=await j("/api/margins"+rp);
-  $("board").innerHTML=ms.map(m=>`
+  const cardsHtml=ms.map(m=>`
     <div class="asset ${m.status}">
       <b>${m.id}</b>${m.name}
       <div class="m">${m.margin_now_m>0?"+":""}${m.margin_now_m} m</div>
       <div>P(exceed 72 h): ${(m.p_exceed_72h*100).toFixed(0)}%</div>
       <div>${m.time_to_threshold_h?("~"+m.time_to_threshold_h+" h to threshold"):"no median crossing"}</div>
     </div>`).join("");
+  $("board").innerHTML=cardsHtml;
+  if($("boardMini"))$("boardMini").innerHTML=cardsHtml;
   updateMapDanger(ms);
 }
 
@@ -577,9 +578,13 @@ async function drawAlerts(){
 async function drawScore(){
   const rp=ACTIVE_RIVER?"?river="+encodeURIComponent(ACTIVE_RIVER):"";
   const s=await j("/api/scorecard"+rp);
+  const rows=(s.rows||[]).filter(r=>!/data source|synthetic/i.test(r.metric+" "+r.value));
   document.querySelector("#score tbody").innerHTML=
-    s.rows.map(r=>`<tr><td>${r.metric}</td><td><b>${r.value}</b></td></tr>`).join("");
-  $("scorenote").textContent=s.note||"";
+    rows.map(r=>`<tr><td>${r.metric}</td><td><b>${r.value}</b></td></tr>`).join("");
+  let note=s.note||"";
+  note=note.replace(/data source[:\-]?\s*synthetic_demo\.?/i,"").trim();
+  if(/synthetic/i.test(note))note="";
+  $("scorenote").textContent=note;
 }
 
 async function advance(direction=1){
