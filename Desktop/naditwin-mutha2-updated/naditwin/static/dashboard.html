@@ -136,7 +136,7 @@
     <div class="maplegend">
       <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
       <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
-      <span><svg width="14" height="14"><circle cx="7" cy="7" r="3.5" fill="#ffe000"/></svg>Chainage (~1 km)</span>
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="3" fill="#ffe000"/></svg>Chainage (~1 km)</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#c62828"/></svg>DANGER</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#fdd835"/></svg>WARNING</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#2e7d32"/></svg>WATCH</span>
@@ -385,7 +385,7 @@ function drawGoogleMap(){
   const chIdx=_chainageIndices();
   chIdx.forEach((i,n)=>{
     new google.maps.Marker({position:{lat:META.lat[i],lng:META.lon[i]},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:3.5,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:3,
         fillColor:"#ffe000",fillOpacity:1,strokeWeight:0},
       label:{text:String(n+1),color:"#ffe000",fontSize:"10px",fontWeight:"700"},
       title:"Chainage "+META.chainage_km[i].toFixed(2)+" km (point "+(n+1)+" of "+chIdx.length+")"});
@@ -430,7 +430,7 @@ function drawLeafletMap(){
   const chIdx=_chainageIndices();
   chIdx.forEach((i,n)=>{
     const la=META.lat[i],lo=META.lon[i],ch=META.chainage_km[i];
-    L.circleMarker([la,lo],{radius:3.5,color:'#ffe000',fillColor:'#ffe000',
+    L.circleMarker([la,lo],{radius:3,color:'#ffe000',fillColor:'#ffe000',
       fillOpacity:1,weight:0})
       .bindTooltip(String(n+1),{permanent:true,direction:'top',offset:[0,-2],className:'chainage-label'})
       .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b> (point ${n+1} of ${chIdx.length})`)
