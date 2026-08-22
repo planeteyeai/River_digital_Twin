@@ -136,7 +136,12 @@
     <div class="maplegend">
       <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
       <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
-      <span><svg width="14" height="14"><circle cx="7" cy="7" r="3" fill="#ffe000"/></svg>Chainage (~1 km)</span>
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="2.5" fill="#ffe000"/></svg>Chainage (~1 km)</span>
+      <span>
+        <button id="chNoToggle" onclick="toggleChainageNos()"
+          style="border:1px solid #ffd600;background:#fff9d6;color:#7a6400;border-radius:12px;
+                 padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer">Chainage no.: ON</button>
+      </span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#c62828"/></svg>DANGER</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#fdd835"/></svg>WARNING</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#2e7d32"/></svg>WATCH</span>
@@ -253,6 +258,7 @@ const GOOGLE_MAPS_API_KEY = "";
 let META=null, profileChart=null, hydroChart=null, ACTIVE_RIVER=null, _leafletMap=null;
 let _refreshTimer=null, _nextRefreshAt=null, _countdownTimer=null;
 let _assetMarkers={};
+let _chainageMarkers=[], _chainageNoVisible=true;
 
 // ── helpers ──────────────────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
@@ -362,6 +368,23 @@ function _chainageIndices(){
   return idxs;
 }
 
+function toggleChainageNos(){
+  _chainageNoVisible=!_chainageNoVisible;
+  _chainageMarkers.forEach(m=>{
+    if(typeof L!=="undefined" && m instanceof L.CircleMarker){
+      if(_chainageNoVisible)m.openTooltip(); else m.closeTooltip();
+    }else if(m.setLabel){
+      m.setLabel(_chainageNoVisible?m._chLabel:null);
+    }
+  });
+  const btn=$("chNoToggle");
+  if(btn){
+    btn.textContent="Chainage no.: "+(_chainageNoVisible?"ON":"OFF");
+    btn.style.background=_chainageNoVisible?"#fff9d6":"#f1f1f1";
+    btn.style.color=_chainageNoVisible?"#7a6400":"#777";
+  }
+}
+
 function loadMap(){
   if(GOOGLE_MAPS_API_KEY&&GOOGLE_MAPS_API_KEY.trim()!==""){
     window.initGoogleMap=drawGoogleMap;
@@ -383,12 +406,15 @@ function drawGoogleMap(){
   new google.maps.Polyline({path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
     strokeColor:"#ffee58",strokeWeight:3}).setMap(map);
   const chIdx=_chainageIndices();
+  _chainageMarkers=[];
   chIdx.forEach((i,n)=>{
-    new google.maps.Marker({position:{lat:META.lat[i],lng:META.lon[i]},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:3,
+    const gm=new google.maps.Marker({position:{lat:META.lat[i],lng:META.lon[i]},map,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:2.5,
         fillColor:"#ffe000",fillOpacity:1,strokeWeight:0},
-      label:{text:String(n+1),color:"#ffe000",fontSize:"10px",fontWeight:"700"},
+      label:_chainageNoVisible?{text:String(n+1),color:"#ffe000",fontSize:"10px",fontWeight:"700"}:null,
       title:"Chainage "+META.chainage_km[i].toFixed(2)+" km (point "+(n+1)+" of "+chIdx.length+")"});
+    gm._chLabel={text:String(n+1),color:"#ffe000",fontSize:"10px",fontWeight:"700"};
+    _chainageMarkers.push(gm);
   });
   _assetMarkers={};
   META.assets.forEach(a=>{
@@ -428,14 +454,17 @@ function drawLeafletMap(){
   L.polyline(META.lat.map((la,i)=>[la,META.lon[i]]),{color:'#ffee58',weight:3}).addTo(map);
   // chainage dots — every ~1 km along centerline, yellow, numbered 1,2,3...last, click shows chainage
   const chIdx=_chainageIndices();
+  _chainageMarkers=[];
   chIdx.forEach((i,n)=>{
     const la=META.lat[i],lo=META.lon[i],ch=META.chainage_km[i];
-    L.circleMarker([la,lo],{radius:3,color:'#ffe000',fillColor:'#ffe000',
+    const cm=L.circleMarker([la,lo],{radius:2.5,color:'#ffe000',fillColor:'#ffe000',
       fillOpacity:1,weight:0})
       .bindTooltip(String(n+1),{permanent:true,direction:'top',offset:[0,-2],className:'chainage-label'})
       .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b> (point ${n+1} of ${chIdx.length})`)
       .addTo(map);
+    _chainageMarkers.push(cm);
   });
+  if(!_chainageNoVisible)_chainageMarkers.forEach(m=>m.closeTooltip());
   META.assets.forEach(a=>{
     const mk=L.marker([a.lat,a.lon],{icon:_assetDivIcon("")})
       .bindPopup(`<b>${a.id}</b> — ${a.name}<br>Chainage ${(a.chainage_m/1000).toFixed(2)} km<br><span style="color:#888;font-size:11px">Status updates on refresh</span>`)
