@@ -114,6 +114,9 @@
     100%{box-shadow:0 0 0 0    rgba(198,40,40,0)}
   }
   .leaflet-div-icon{background:transparent!important;border:none!important}
+  .chainage-label{background:rgba(0,0,0,.55)!important;border:none!important;color:#ffe000!important;
+    font-size:10px!important;font-weight:700;padding:0 3px!important;box-shadow:none!important}
+  .chainage-label::before{display:none!important}
 </style>
 </head>
 <body>
@@ -133,7 +136,7 @@
     <div class="maplegend">
       <span><span class="swatch" style="background:#2dc0fb"></span>Traced river polygon</span>
       <span><span class="swatch" style="background:#ffee58"></span>Centerline / chainage</span>
-      <span><svg width="18" height="18"><circle cx="9" cy="9" r="4" fill="#ffe000"/></svg>Chainage (~1 km)</span>
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="2" fill="#ffe000"/></svg>Chainage (~1 km)</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#c62828"/></svg>DANGER</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#fdd835"/></svg>WARNING</span>
       <span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#2e7d32"/></svg>WATCH</span>
@@ -346,6 +349,19 @@ async function switchRiver(name){
 }
 
 // ── map ───────────────────────────────────────────────────────────────────
+function _chainageIndices(){
+  const ch=META.chainage_km, n=ch.length;
+  const maxKm=Math.floor(ch[n-1]);
+  const idxs=[];
+  let p=0;
+  for(let km=1;km<=maxKm;km++){
+    while(p<n-1 && Math.abs(ch[p+1]-km)<=Math.abs(ch[p]-km))p++;
+    idxs.push(p);
+  }
+  if(!idxs.length||idxs[idxs.length-1]!==n-1)idxs.push(n-1);
+  return idxs;
+}
+
 function loadMap(){
   if(GOOGLE_MAPS_API_KEY&&GOOGLE_MAPS_API_KEY.trim()!==""){
     window.initGoogleMap=drawGoogleMap;
@@ -366,13 +382,13 @@ function drawGoogleMap(){
     strokeColor:"#2dc0fb",strokeWeight:2,fillColor:"#2dc0fb",fillOpacity:.12}).setMap(map);
   new google.maps.Polyline({path:META.lat.map((la,i)=>({lat:la,lng:META.lon[i]})),
     strokeColor:"#ffee58",strokeWeight:3}).setMap(map);
-  const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
-  META.lat.forEach((la,i)=>{
-    if(i%MJ!==0)return;
-    new google.maps.Marker({position:{lat:la,lng:META.lon[i]},map,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:4,
+  const chIdx=_chainageIndices();
+  chIdx.forEach((i,n)=>{
+    new google.maps.Marker({position:{lat:META.lat[i],lng:META.lon[i]},map,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:2,
         fillColor:"#ffe000",fillOpacity:1,strokeWeight:0},
-      title:"Chainage "+META.chainage_km[i].toFixed(2)+" km"});
+      label:{text:String(n+1),color:"#ffe000",fontSize:"10px",fontWeight:"700"},
+      title:"Chainage "+META.chainage_km[i].toFixed(2)+" km (point "+(n+1)+" of "+chIdx.length+")"});
   });
   _assetMarkers={};
   META.assets.forEach(a=>{
@@ -410,14 +426,14 @@ function drawLeafletMap(){
   const poly=META.reach_polygon_lonlat.map(([lo,la])=>[la,lo]);
   L.polygon(poly,{color:'#2dc0fb',weight:2,fillOpacity:.12}).addTo(map);
   L.polyline(META.lat.map((la,i)=>[la,META.lon[i]]),{color:'#ffee58',weight:3}).addTo(map);
-  // chainage dots — only major (~1 km) chainage shown, yellow, small (visible when zoomed in)
-  const MJ=Math.max(1,Math.round(1000/META.cell_size_m));
-  META.lat.forEach((la,i)=>{
-    if(i%MJ!==0)return;
-    const ch=META.chainage_km[i];
-    L.circleMarker([la,META.lon[i]],{radius:4,color:'#ffe000',fillColor:'#ffe000',
+  // chainage dots — every ~1 km along centerline, yellow, numbered 1,2,3...last, click shows chainage
+  const chIdx=_chainageIndices();
+  chIdx.forEach((i,n)=>{
+    const la=META.lat[i],lo=META.lon[i],ch=META.chainage_km[i];
+    L.circleMarker([la,lo],{radius:2,color:'#ffe000',fillColor:'#ffe000',
       fillOpacity:1,weight:0})
-      .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b>`)
+      .bindTooltip(String(n+1),{permanent:true,direction:'top',offset:[0,-2],className:'chainage-label'})
+      .bindPopup(`<b>Chainage ${ch.toFixed(2)} km</b> (point ${n+1} of ${chIdx.length})`)
       .addTo(map);
   });
   META.assets.forEach(a=>{
